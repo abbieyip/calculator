@@ -6,10 +6,14 @@
  * Description: Calculates [mathematical expression] and prints the answer to
  * the terminal; if argument is invalid (i.e. contains variables or does not
  * have balanced parentheses), throws an error
+ *
+ * Assumptions:
+ *  1. Parentheses are balanced
  */
 
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.LinkedList;
 
 public class Calculator {
 
@@ -25,21 +29,23 @@ public class Calculator {
   * @param: two numbers and an operator
   * @return: evaluated number
   */
-  public static double evaluate(double num1, double num2, String operator) {
-    switch (operator) {
-      case "+":
-        return num1 + num2;
-      case "-":
-        return num1 - num2;
-      case "*":
-        return num1 * num2;
-      case "/":
-        // invalid division by zero
-        if (num2 == 0) {
-        }
-        return num1 / num2;
-    }
-    return 0;
+  public static double evaluate(double num1, double num2, String operator)
+    throws DivisionByZeroException {
+      switch (operator) {
+        case "+":
+          return num1 + num2;
+        case "-":
+          return num1 - num2;
+        case "*":
+          return num1 * num2;
+        case "/":
+          // invalid division by zero
+          if (num2 == 0) {
+            throw new DivisionByZeroException();
+          }
+          return num1 / num2;
+      }
+      return 0;
   }
 
  /**
@@ -75,48 +81,71 @@ public class Calculator {
    }
 
  /**
+  * Method name: removeDoubleNegative
+  * Description: Helper method to convert double negatives into addition
+  * @param: String mathematical expression
+  * @return: expression in linked list format without any double negatives or
+  * spaces
+  */
+  public static LinkedList<Character> removeDoubleNegative(String input) {
+    String str = input.replaceAll("\\s", "");
+    char[] charArray = str.toCharArray();
+    LinkedList<Character> list = new LinkedList<Character>();
+    for (int i = 0; i < charArray.length; i++) {
+      if (charArray[i] == '-' && charArray[i + 1] == '-') {
+        list.add('+');
+      }
+      else {
+        list.add(charArray[i]);
+      }
+    }
+    return list;
+  }
+
+ /**
   * Method name: postfix
   * Description: changes infix expression to postfix expression based
   * on precedence
   *   Examples: 24 + 2 => 24 2 +
   *             2 + 4 * 3 => 2 4 3 * +
                 (2 + 4) * 3 => 2 4 + 3 *
-  * @param: expression in char[] format
+  * @param: expression in linked list format
   * @return: String expression in postfix format, numbers are separated by
   * an empty space
   */
-  public static String postfix(char[] input) {
+  public static String postfix(LinkedList<Character> input) {
     String output = "";
     Stack<Character> stack = new Stack<>();
 
     // iterates through character array
-    for (int i = 0; i < input.length ; i++) {
+    for (int i = 0; i < input.size(); i++) {
+      System.out.println(input.get(i));
       // checks for PEDMAS
-      if (precedence(input[i]) > 0) {
+      if (precedence(input.get(i)) > 0) {
         // stack has higher priority than current, add top to str
         while (!stack.empty()
-          && precedence(stack.peek()) >= precedence(input[i])) {
+          && precedence(stack.peek()) >= precedence(input.get(i))) {
             output += stack.pop() + " ";
         }
-        stack.push(input[i]);
+        stack.push(input.get(i));
       }
 
-      else if (isDigit(input[i])) {
+      else if (isDigit(input.get(i))) {
         // number may be more than one digit long
-        while (i < input.length && isDigit(input[i])) {
-          output += input[i];
+        while (i < input.size() && isDigit(input.get(i))) {
+          output += input.get(i);
           i++;
         }
         output += " ";
         i--; // reached operator, backstep one
       }
 
-      else if (input[i] == OPEN_PARENTHESIS) {
-        stack.push(input[i]);
+      else if (input.get(i) == OPEN_PARENTHESIS) {
+        stack.push(input.get(i));
       }
 
       // reached end of parentheses, must check for priority
-      else if (input[i] == CLOSED_PARENTHESIS) {
+      else if (input.get(i) == CLOSED_PARENTHESIS) {
         char operator = stack.pop();
         // calculates quantity within parentheses
         while (operator != OPEN_PARENTHESIS) {
@@ -131,23 +160,6 @@ public class Calculator {
       output += stack.pop() + " ";
     }
     return output;
-  }
-
- /**
-  * Method name: removeDoubleNegative
-  * Description: Helper method to convert double negatives into addition
-  * @param: String mathematical expression
-  * @return: expression in char array format without any double negatives
-  */
-  public static char[] removeDoubleNegative(String input) {
-    char[] charArray = input.toCharArray();
-    for (int i = 0; i < charArray.length - 1; i++) {
-      if (charArray[i] == '-' && charArray[i + 1] == '-') {
-        charArray[i] = ' ';
-        charArray[i + 1] = '+';
-      }
-    }
-    return charArray;
   }
 
  /**
@@ -169,8 +181,14 @@ public class Calculator {
           // evaluates quantity
           double num2 = stack.pop();
           double num1 = stack.pop();
-          double ans = evaluate(num1, num2, split[i]);
-          stack.push(ans);
+          try {
+            double ans = evaluate(num1, num2, split[i]);
+            stack.push(ans);
+          }
+          catch (DivisionByZeroException e) {
+            System.out.println(e.getMessage());
+            System.exit(1);
+          }
       }
 
       // reached a numerical value
@@ -202,12 +220,12 @@ public class Calculator {
     }
 
     // expression given
-    else if (args.length == 1) {
-      arg = args[0];
+    else {
+      for (String str : args) {
+        arg += str;
+      }
     }
-
     // evaluates expression
-    System.out.println("OUTPUT: " + postfix(removeDoubleNegative(arg)));
     String postfixFormat = postfix(removeDoubleNegative(arg));
     double ans = parseString(postfixFormat);
     System.out.println(arg + " = " + ans);
