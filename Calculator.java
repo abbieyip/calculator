@@ -9,6 +9,7 @@
  *
  * Assumptions:
  *  1. Parentheses are balanced
+ *  2. No invalid characters (only digits and operators)
  */
 
 import java.util.Scanner;
@@ -62,6 +63,9 @@ public class Calculator {
     else if (operator == '*' || operator == '/') {
       return 2;
     }
+    else if (operator == OPEN_PARENTHESIS || operator == CLOSED_PARENTHESIS) {
+      return 0;
+    }
     else return -1;
   }
 
@@ -81,25 +85,53 @@ public class Calculator {
    }
 
  /**
-  * Method name: removeDoubleNegative
-  * Description: Helper method to convert double negatives into addition
+  * Method name: simpleFormat
+  * Description: Helper method to convert double negatives into addition and
+  * remove white spaces
   * @param: String mathematical expression
   * @return: expression in linked list format without any double negatives or
   * spaces
   */
-  public static LinkedList<Character> removeDoubleNegative(String input) {
-    String str = input.replaceAll("\\s", "");
-    char[] charArray = str.toCharArray();
-    LinkedList<Character> list = new LinkedList<Character>();
-    for (int i = 0; i < charArray.length; i++) {
-      if (charArray[i] == '-' && charArray[i + 1] == '-') {
-        list.add('+');
+  public static LinkedList<Character> simpleFormat(String input)
+    throws InvalidCharacterException, DoubleOperatorException,
+    InvalidInfixOperatorException {
+      String str = input.replaceAll("\\s", "");
+      System.out.println(str);
+      char[] charArray = str.toCharArray();
+      LinkedList<Character> list = new LinkedList<Character>();
+
+      for (int i = 0; i < charArray.length; i++) {
+        // checks for consecutives
+        if (i < charArray.length - 1) {
+          // replaces double negatives
+          if (charArray[i] == '-' && charArray[i + 1] == '-') {
+            list.add('+');
+          }
+          // checks for valid characters and operators
+          else if (precedence(charArray[i]) > 0
+            && precedence(charArray[i + 1]) > 0) {
+              throw new DoubleOperatorException();
+          }
+          // checks for double decimals
+          else if (charArray[i] == '.' && charArray[i + 1] == '.') {
+            System.out.println("double decimal invalid ");
+            System.exit(1);
+          }
+        }
+        // valid operator or digit
+        if (precedence(charArray[i]) >= 0 || isDigit(charArray[i])) {
+          list.add(charArray[i]);
+        }
+        else { // invalid
+          throw new InvalidCharacterException(Character.toString(charArray[i]));
+        }
       }
-      else {
-        list.add(charArray[i]);
+      // checks for operator location
+      if (precedence(charArray[charArray.length - 1]) > 0
+        || precedence(charArray[0]) > 0) {
+          throw new InvalidInfixOperatorException();
       }
-    }
-    return list;
+      return list;
   }
 
  /**
@@ -108,7 +140,7 @@ public class Calculator {
   * on precedence
   *   Examples: 24 + 2 => 24 2 +
   *             2 + 4 * 3 => 2 4 3 * +
-                (2 + 4) * 3 => 2 4 + 3 *
+  *             (2 + 4) * 3 => 2 4 + 3 *
   * @param: expression in linked list format
   * @return: String expression in postfix format, numbers are separated by
   * an empty space
@@ -119,7 +151,7 @@ public class Calculator {
 
     // iterates through character array
     for (int i = 0; i < input.size(); i++) {
-      System.out.println(input.get(i));
+      System.out.println("JFASKLJFLA " + input.get(i));
       // checks for PEDMAS
       if (precedence(input.get(i)) > 0) {
         // stack has higher priority than current, add top to str
@@ -174,7 +206,7 @@ public class Calculator {
 
     // iterates through each operator and number
     for (int i = 0; i < split.length; i++) {
-      System.out.println(split[i]);
+      System.out.println("reading " + split[i]);
       // reached an operator
       if (split[i].equals("+") || split[i].equals("-") || split[i].equals("*")
         || split[i].equals("/")) {
@@ -185,24 +217,23 @@ public class Calculator {
             double ans = evaluate(num1, num2, split[i]);
             stack.push(ans);
           }
-          catch (DivisionByZeroException e) {
+          catch (DivisionByZeroException e) { // division by 0
             System.out.println(e.getMessage());
             System.exit(1);
           }
       }
-
       // reached a numerical value
       else {
         stack.push(Double.parseDouble(split[i]));
       }
     }
-
+    double answer = stack.pop();
     // final answer is located in stack
-    if (stack.size() == 1) {
-      return stack.pop();
+    while (!stack.empty()) {
+       stack.pop();
     }
     // error, missing operator or invalid expression
-    return 0;
+    return answer;
   }
 
  /**
@@ -226,8 +257,24 @@ public class Calculator {
       }
     }
     // evaluates expression
-    String postfixFormat = postfix(removeDoubleNegative(arg));
-    double ans = parseString(postfixFormat);
-    System.out.println(arg + " = " + ans);
+    try {
+      String postfixFormat = postfix(simpleFormat(arg));
+      System.out.println("post: " + postfixFormat);
+      double ans = parseString(postfixFormat);
+      System.out.println(arg + " = " + ans);
+      System.exit(0);
+    }
+    catch (InvalidCharacterException e) {
+      System.out.println(e.getMessage());
+      System.exit(1);
+    }
+    catch (DoubleOperatorException e) {
+      System.out.println(e.getMessage());
+      System.exit(1);
+    }
+    catch (InvalidInfixOperatorException e) {
+      System.out.println(e.getMessage());
+      System.exit(1);
+    }
   }
 }
