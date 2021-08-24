@@ -4,12 +4,12 @@
  * Usage: java Calculator [mathematical expression]
  *        java Calculator
  * Description: Calculates [mathematical expression] and prints the answer to
- * the terminal; if argument is invalid (i.e. contains variables or does not
- * have balanced parentheses), throws an error
+ * the terminal; if argument is invalid (i.e. contains variables, double decimals,
+ * or invalid double operators), throws an error
  *
  * Assumptions:
- *  1. Parentheses are balanced
- *  2. No invalid characters (only digits and operators)
+ *  1. Numbers are within the range of a double
+ *  2. Cannot start with an operator (e.g. --1 + 2 or + 4 * 8)
  */
 
 import java.util.Scanner;
@@ -20,14 +20,16 @@ public class Calculator {
 
   private static final char OPEN_PARENTHESIS = '(';
   private static final char CLOSED_PARENTHESIS = ')';
-  private static final char[] numbers = {'0', '1', '2', '3', '4', '5', '6',
-    '7', '8', '9', '.'};
+  private static final char[] NUMBERS = {'0', '1', '2', '3', '4', '5', '6',
+    '7', '8', '9'};
+  private static final char DECIMAL = '.';
 
  /**
   * Method name: evaluate
   * Description: completes the arithmetic of two numbers using the given
   * operator
   * @param: two numbers and an operator
+  * @throws: DivisionByZeroException when trying to divide by zero
   * @return: evaluated number
   */
   public static double evaluate(double num1, double num2, String operator)
@@ -76,7 +78,7 @@ public class Calculator {
    * @return: true if character is a digit, otherwise false
    */
    public static boolean isDigit(char character) {
-     for (char num : numbers) {
+     for (char num : NUMBERS) {
        if (character == num) {
          return true;
        }
@@ -86,50 +88,67 @@ public class Calculator {
 
  /**
   * Method name: simpleFormat
-  * Description: Helper method to convert double negatives into addition and
-  * remove white spaces
+  * Description: Helper method to convert double negatives into addition,
+  * to remove white spaces, and to check for invalid characters
+  * @throws: InvalidCharacterException, DoubleOperatorException,
+  * InvalidInfixOperatorException
   * @param: String mathematical expression
-  * @return: expression in linked list format without any double negatives or
+  * @return: valid expression string without any double negatives or
   * spaces
   */
-  public static LinkedList<Character> simpleFormat(String input)
-    throws InvalidCharacterException, DoubleOperatorException,
-    InvalidInfixOperatorException {
+  public static LinkedList<String> simpleFormat(String input)
+    throws InvalidCharacterException, SyntaxErrorException {
+      // removes all spaces
       String str = input.replaceAll("\\s", "");
-      System.out.println(str);
       char[] charArray = str.toCharArray();
-      LinkedList<Character> list = new LinkedList<Character>();
 
-      for (int i = 0; i < charArray.length; i++) {
-        // checks for consecutives
-        if (i < charArray.length - 1) {
-          // replaces double negatives
-          if (charArray[i] == '-' && charArray[i + 1] == '-') {
-            list.add('+');
+      LinkedList<String> list = new LinkedList<String>();
+      int index = 0;
+      // iterates through each character
+      while (index < charArray.length) {
+          if (index < charArray.length - 1) {
+              // removes double negatives
+              if (charArray[index] == '-' && charArray[index + 1] == '-') {
+                  list.add("+");
+                  index += 2;
+                  continue;
+              }
+              // invalid double operator
+              else if (charArray[index + 1] != '-' && precedence(charArray[index]) > 0
+                  && precedence(charArray[index + 1]) > 0) {
+                  throw new SyntaxErrorException();
+              }
+              // valid negative number after operator
+              else if (index > 0 && charArray[index] == '-' && precedence(charArray[index - 1]) > 0
+                  && isDigit(charArray[index + 1])) {
+                  list.add("-" + charArray[index + 1]);
+                  index += 2;
+                  continue;
+              }
+              // beginning negative number
+              else if (index == 0 && charArray[index] == '-' && isDigit(charArray[index + 1])) {
+                  list.add("-" + charArray[index + 1]);
+                  index += 2;
+              }
+              // invalid double decimal
+              else if (charArray[index] == DECIMAL && charArray[index + 1] == DECIMAL) {
+                  throw new SyntaxErrorException();
+              }
           }
-          // checks for valid characters and operators
-          else if (precedence(charArray[i]) > 0
-            && precedence(charArray[i + 1]) > 0) {
-              throw new DoubleOperatorException();
+          // valid operator or number
+          if (precedence(charArray[index]) > 0 || isDigit(charArray[index]) || charArray[index] == OPEN_PARENTHESIS
+          || charArray[index] == CLOSED_PARENTHESIS || charArray[index] == DECIMAL) {
+              list.add("" + charArray[index]);
           }
-          // checks for double decimals
-          else if (charArray[i] == '.' && charArray[i + 1] == '.') {
-            System.out.println("double decimal invalid ");
-            System.exit(1);
+          else { // invalid
+              throw new InvalidCharacterException(Character.toString(charArray[index]));
           }
-        }
-        // valid operator or digit
-        if (precedence(charArray[i]) >= 0 || isDigit(charArray[i])) {
-          list.add(charArray[i]);
-        }
-        else { // invalid
-          throw new InvalidCharacterException(Character.toString(charArray[i]));
-        }
+        index++;
       }
-      // checks for operator location
-      if (precedence(charArray[charArray.length - 1]) > 0
-        || precedence(charArray[0]) > 0) {
-          throw new InvalidInfixOperatorException();
+        // checks if expression begins or ends with an invalid operator
+      if ((list.indexOf(0) != '-' && precedence(((list.get(0)).charAt(0))) > 0)
+              || precedence(list.getLast().charAt(0)) > 0) {
+          throw new SyntaxErrorException();
       }
       return list;
   }
@@ -141,55 +160,51 @@ public class Calculator {
   *   Examples: 24 + 2 => 24 2 +
   *             2 + 4 * 3 => 2 4 3 * +
   *             (2 + 4) * 3 => 2 4 + 3 *
-  * @param: expression in linked list format
-  * @return: String expression in postfix format, numbers are separated by
+  * @param expression in linked list format
+  * @return String expression in postfix format, numbers are separated by
+  * @throws SyntaxErrorException when input is not formatted correctly
   * an empty space
   */
-  public static String postfix(LinkedList<Character> input) {
+  public static String postfix(LinkedList<String> input) throws SyntaxErrorException {
     String output = "";
-    Stack<Character> stack = new Stack<>();
+    Stack<Character> stack = new Stack<Character>();
 
     // iterates through character array
     for (int i = 0; i < input.size(); i++) {
-      System.out.println("JFASKLJFLA " + input.get(i));
-      // checks for PEDMAS
-      if (precedence(input.get(i)) > 0) {
-        // stack has higher priority than current, add top to str
-        while (!stack.empty()
-          && precedence(stack.peek()) >= precedence(input.get(i))) {
-            output += stack.pop() + " ";
+        // checks for PEDMAS
+        String current = input.get(i);
+        char firstChar = current.charAt(0);
+        // not a negative number or multi-digit number; check for precedence
+        if (current.length() == 1 && precedence(firstChar) > 0) {
+            // stack has higher priority than current, add top to output
+            while (!stack.empty() && precedence(stack.peek()) >= precedence(firstChar)) {
+                output += stack.pop() + " "; // space out numbers & operators
+            }
+            stack.push(firstChar);
         }
-        stack.push(input.get(i));
-      }
-
-      else if (isDigit(input.get(i))) {
-        // number may be more than one digit long
-        while (i < input.size() && isDigit(input.get(i))) {
-          output += input.get(i);
-          i++;
+        // reached a number
+        else if (current.length() > 1 || isDigit(firstChar)) {
+            output += current + " ";
         }
-        output += " ";
-        i--; // reached operator, backstep one
-      }
-
-      else if (input.get(i) == OPEN_PARENTHESIS) {
-        stack.push(input.get(i));
-      }
-
-      // reached end of parentheses, must check for priority
-      else if (input.get(i) == CLOSED_PARENTHESIS) {
-        char operator = stack.pop();
-        // calculates quantity within parentheses
-        while (operator != OPEN_PARENTHESIS) {
-          output += operator + " ";
-          operator = stack.pop();
+        else if (firstChar == OPEN_PARENTHESIS) {
+            stack.push(firstChar);
         }
-      }
+        else if (firstChar == CLOSED_PARENTHESIS) {
+            char operator = stack.pop();
+            while (operator != OPEN_PARENTHESIS) {
+                output += operator + " ";
+                if (stack.empty()) {
+                    throw new SyntaxErrorException();
+                }
+                operator = stack.pop();
+            }
+        }
     }
-
-    // adds lowest priority numbers to str
     while (!stack.empty()) {
-      output += stack.pop() + " ";
+        if (stack.peek() == OPEN_PARENTHESIS) {
+            throw new SyntaxErrorException();
+        }
+        output += stack.pop() + " ";
     }
     return output;
   }
@@ -268,12 +283,8 @@ public class Calculator {
       System.out.println(e.getMessage());
       System.exit(1);
     }
-    catch (DoubleOperatorException e) {
-      System.out.println(e.getMessage());
-      System.exit(1);
-    }
-    catch (InvalidInfixOperatorException e) {
-      System.out.println(e.getMessage());
+    catch (SyntaxErrorException e) {
+      System.out.println(e.getMessage() );
       System.exit(1);
     }
   }
