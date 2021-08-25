@@ -12,8 +12,6 @@
 
    /**
     * Constructor creates a new exception when division by zero is attempted
-    * @param NONE
-    * @return NONE
     */
     public SyntaxErrorException() {
       super(EXCEPTION_MSG);
@@ -22,7 +20,6 @@
     /**
      * Method name: toString
      * Description: overrides toString method to throw Exception
-     * @param NONE
      * @return String with error message
      */
      @Override

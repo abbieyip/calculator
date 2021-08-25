@@ -12,8 +12,7 @@
    /**
     * Constructor creates a new exception when there is an invalid non-digit
     * or non operator character
-    * @param NONE
-    * @return NONE
+    * @param c, invalid character
     */
     public InvalidCharacterException(String c) {
       super(String.format(EXCEPTION_MSG, c));
@@ -23,7 +22,6 @@
     /**
      * Method name: toString
      * Description: overrides toString method to throw Exception
-     * @param NONE
      * @return String with error message containing which invalid character
      */
      @Override

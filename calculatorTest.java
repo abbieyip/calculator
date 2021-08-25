@@ -56,6 +56,7 @@ public class calculatorTest {
       exception.expect(DivisionByZeroException.class);
     }
     catch (DivisionByZeroException e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -104,6 +105,7 @@ public class calculatorTest {
       exception.expect(DivisionByZeroException.class);
     }
     catch (DivisionByZeroException e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -160,10 +162,10 @@ public class calculatorTest {
    * Method name: testSimpleFormat
    * Description: Tests if simpleFormat changes the user input
    * into a valid infix expression
-   * @throws InvalidCharacterException when a non-digit or non-operator character
-   * is encountered
-   * @throws SyntaxErrorException when there are double operators or leading/trailing
-   * operators
+   * @throws InvalidCharacterException when a non-digit or non-operator
+   * character is encountered
+   * @throws SyntaxErrorException when there are double operators or
+   * leading/trailing operators
    */
   @Test
   public void testSimpleFormat() throws InvalidCharacterException,
@@ -188,28 +190,40 @@ public class calculatorTest {
       assertEquals(test2, Calculator.simpleFormat("5*-     4"));
 
       // long expressions
-      LinkedList<String> test3 = new LinkedList<>(Arrays.asList("1", "+", "2", "*", "5", "/", "8"));
+      LinkedList<String> test3 =
+              new LinkedList<>(Arrays.asList("1", "+", "2", "*", "5", "/", "8"));
       assertEquals(test3, Calculator.simpleFormat("1+2*5/8"));
       assertEquals(test3, Calculator.simpleFormat("1    +2*5    /8"));
       assertEquals(test3, Calculator.simpleFormat("1--2*5/8"));
       assertEquals(test3, Calculator.simpleFormat("1+      2*    5/  8"));
 
       // negative expressions
-      LinkedList<String> test4 = new LinkedList<>(Arrays.asList("-1", "/", "5","+","3"));
+      LinkedList<String> test4 =
+              new LinkedList<>(Arrays.asList("-1", "/", "5","+","3"));
       assertEquals(test4, Calculator.simpleFormat("-1/5--3"));
-      LinkedList<String> test5 = new LinkedList<>(Arrays.asList("-1", "*", "-2","-","4"));
+      LinkedList<String> test5 =
+              new LinkedList<>(Arrays.asList("-1", "*", "-2","-","4"));
       assertEquals(test5, Calculator.simpleFormat("-1*-2-4"));
+      LinkedList<String> test6 =
+              new LinkedList<>(Arrays.asList("-4","+","24"));
+      assertEquals(test6, Calculator.simpleFormat("-4+24"));
 
       // larger numbers
-      LinkedList<String> test6 = new LinkedList<>(Arrays.asList("-24.5","/","-65.102","*","(","12.1", "-", "10.2", ")"));
-      assertEquals(test6, Calculator.simpleFormat("-24.5/-65.102*(12.1-10.2)"));
-      assertEquals(test6, Calculator.simpleFormat("-24.5  /- 65.   102* (12.1-10.2 ) "));
+      LinkedList<String> test7 = new LinkedList<>(Arrays.asList("-24.5","/",
+              "-65.102","*","(","12.1", "-", "10.2", ")"));
+      assertEquals(test7,
+              Calculator.simpleFormat("-24.5/-65.102*(12.1-10.2)"));
+      assertEquals(test7,
+              Calculator.simpleFormat("-24.5  /- 65.102* (12.1-10.2 ) "));
 
       // nested parentheses
-      LinkedList<String> test7 = new LinkedList<>(Arrays.asList("(", "1.24", "+", "(", "-24.89", "/",
-              "(" , "1", "-", "3.4",")",")",")"));
-      assertEquals(test7,Calculator.simpleFormat("(1.24+(-24.89/(1-3.4)))"));
-      assertEquals(test7,Calculator.simpleFormat("(1.24 + (- 24.89/(1-3.4) ) )"));
+      LinkedList<String> test8 =
+              new LinkedList<>(Arrays.asList("(", "1.24", "+", "(", "-24.89",
+                      "/", "(" , "1", "-", "3.4",")",")",")"));
+      assertEquals(test8,
+              Calculator.simpleFormat("(1.24+(-24.89/(1-3.4)))"));
+      assertEquals(test8,
+              Calculator.simpleFormat("(1.24 + (- 24.89/(1-3.4) ) )"));
 
       // double operators
       // Calculator.simpleFormat("2+-+-4");
@@ -231,37 +245,43 @@ public class calculatorTest {
       Calculator.simpleFormat("+1/78");
       exception.expect(SyntaxErrorException.class);
     }
-    catch (InvalidCharacterException e) {
-      System.out.println(e.getMessage());
-    }
-    catch (SyntaxErrorException e) {
+    catch (InvalidCharacterException | SyntaxErrorException e) {
       System.out.println(e.getMessage());
     }
   }
 
   /**
    * Method name: testPostfix
-   * Description: checks if infix expression is correctly converted into postfix
+   * Description: checks if infix expression is correctly converted into
+   * postfix
    * @throws SyntaxErrorException when there are unbalanced parentheses
    */
   @Test
   public void testPostfix() throws SyntaxErrorException {
     try {
-      assertEquals("1 2 + ", Calculator.postfix(new LinkedList<>(Arrays.asList("1","+","2"))));
-      assertEquals("4 5 * 2 / ", Calculator.postfix(new LinkedList<>(Arrays.asList("4","*","5", "/", "2"))));
-      assertEquals("-5 -8 + 11 2 * + ",
-              Calculator.postfix(new LinkedList<>(Arrays.asList("-5","+","-8", "+", "11", "*", "2"))));
-      assertEquals("4 2 - 3.5 * ",
-              Calculator.postfix(new LinkedList<>(Arrays.asList("(","4","-", "2", ")", "*", "3.5"))));
+      assertEquals("1 2 + ", Calculator.postfix(
+              new LinkedList<>(Arrays.asList("1","+","2"))));
+      assertEquals("4 5 * 2 / ", Calculator.postfix(
+              new LinkedList<>(Arrays.asList("4","*","5", "/", "2"))));
+      assertEquals("-5 -8 + 11 2 * + ", Calculator.postfix(
+              new LinkedList<>
+                      (Arrays.asList("-5","+","-8", "+", "11", "*", "2"))));
+      assertEquals("4 2 - 3.5 * ", Calculator.postfix(new LinkedList<>
+              (Arrays.asList("(","4","-", "2", ")", "*", "3.5"))));
       assertEquals("25 10 5 -29 / * - ",
-              Calculator.postfix(new LinkedList<>(Arrays.asList("(", "25","-","10", "*", "(", "5", "/", "-29", ")", ")"))));
-      assertEquals("0 ", Calculator.postfix(new LinkedList<>(Arrays.asList("(","(","(", "0", ")", ")", ")"))));
+              Calculator.postfix(new LinkedList<>(Arrays.asList("(", "25","-",
+                      "10", "*", "(", "5", "/", "-29", ")", ")"))));
+      assertEquals("0 ", Calculator.postfix(
+              new LinkedList<>(Arrays.asList("(","(","(", "0", ")", ")",
+                      ")"))));
 
       // uneven parentheses
       // Calculator.postfix(new LinkedList<>(Arrays.asList("1","+","2", ")")));
       // Calculator.postfix(new LinkedList<>(Arrays.asList("(","5","+", "2")));
-      // Calculator.postfix(new LinkedList<>(Arrays.asList("(","4","-", "2", ")", "*", ")")));
-      Calculator.postfix(new LinkedList<>(Arrays.asList("(","(","(", "(", ")", ")", ")")));
+      // Calculator.postfix(new LinkedList<>
+      //    (Arrays.asList("(","4","-", "2", ")", "*", ")")));
+      Calculator.postfix(new LinkedList<>(Arrays.asList("(","(","(", "(",
+              ")", ")", ")")));
       exception.expect(SyntaxErrorException.class);
     }
     catch (SyntaxErrorException e) {
@@ -274,11 +294,22 @@ public class calculatorTest {
    * Description: parses through postfix expression and evaluates to a double
    */
   @Test
-  public void testParseString() {
-    assertEquals(3.0, Calculator.parseString("1 2 + "), 0);
-    assertEquals(10.0, Calculator.parseString("4 5 * 2 / "), 0);
-    assertEquals(9.0, Calculator.parseString("-5 -8 + 11 2 * + "), 0);
-    assertEquals(7.0, Calculator.parseString("4 2 - 3.5 * "), 0);
-    assertEquals(12.111, Calculator.parseString("12.111 "), 0);
+  public void testParseString() throws SyntaxErrorException{
+    try {
+      assertEquals(3.0,
+              Calculator.parseString("1 2 + "), 0);
+      assertEquals(10.0,
+              Calculator.parseString("4 5 * 2 / "), 0);
+      assertEquals(9.0,
+              Calculator.parseString("-5 -8 + 11 2 * + "), 0);
+      assertEquals(7.0,
+              Calculator.parseString("4 2 - 3.5 * "), 0);
+      assertEquals(12.111,
+              Calculator.parseString("12.111 "), 0);
+    }
+    catch (SyntaxErrorException e) {
+      System.out.println(e.getMessage());
+    }
+
   }
 }
