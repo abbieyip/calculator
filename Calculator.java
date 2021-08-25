@@ -15,6 +15,9 @@
  *  3. Multiplication must be written explicitly using "*"
  *          e.g. -(2 + 4) / 2 is invalid
  *               -1 * (2 + 4) / 2 is valid
+ *  4. Parentheses must be filled
+ *          e.g. ( ) and ( ) 1 + 2 are invalid
+ *
  */
 
 import java.util.Scanner;
@@ -29,6 +32,7 @@ public class Calculator {
     private static final char DECIMAL = '.';
     private static final String PROMPT
             = "Enter a mathematical expression in infix notation.";
+    private static final String NO_INPUT = "No input was given.";
 
  /**
   * Method name: evaluate
@@ -215,6 +219,9 @@ public class Calculator {
             stack.push(firstChar);
         }
         else if (firstChar == CLOSED_PARENTHESIS) {
+            if (stack.empty()) {
+                throw new SyntaxErrorException();
+            }
             char operator = stack.pop();
             // backtracks until an open parenthesis is met
             while (operator != OPEN_PARENTHESIS) {
@@ -252,8 +259,8 @@ public class Calculator {
           // reached an operator
           if (split[i].equals("+") || split[i].equals("-")
                   || split[i].equals("*") || split[i].equals("/")) {
-              if (stack.size() > 1) {
-                  // evaluates quantity
+              if (stack.size() > 1) { // must have two numbers to evaluate
+                  // quantity
                   double num2 = stack.pop();
                   double num1 = stack.pop();
                   try {
@@ -270,10 +277,19 @@ public class Calculator {
           }
           // reached a numerical value
           else {
+              // invalid empty string
+              if (split[i].length() == 0) {
+                  throw new SyntaxErrorException();
+              }
               stack.push(Double.parseDouble(split[i]));
           }
       }
-      return stack.pop();
+      if (!stack.empty()) {
+          return stack.pop();
+      }
+      else {
+          throw new SyntaxErrorException();
+      }
   }
 
  /**
@@ -296,6 +312,10 @@ public class Calculator {
           for (String str : args) {
               arg += str;
           }
+      }
+      if (arg.length() == 0) {
+          System.out.println(NO_INPUT);
+          System.exit(0);
       }
       // evaluates expression
       try {

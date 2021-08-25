@@ -306,6 +306,8 @@ public class calculatorTest {
               Calculator.parseString("4 2 - 3.5 * "), 0);
       assertEquals(12.111,
               Calculator.parseString("12.111 "), 0);
+      Calculator.parseString(" ");
+      exception.expect(SyntaxErrorException.class);
     }
     catch (SyntaxErrorException e) {
       System.out.println(e.getMessage());
