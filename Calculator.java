@@ -21,7 +21,6 @@
  *          e.g. ( ) and (( ) 1 + 2) are invalid
  */
 
-import java.time.Period;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.LinkedList;
@@ -29,8 +28,6 @@ import java.util.LinkedList;
 public class Calculator {
     private static final char OPEN_PARENTHESIS = '(';
     private static final char CLOSED_PARENTHESIS = ')';
-    private static final char[] NUMBERS
-            = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
     private static final char DECIMAL = '.';
     private static final String PROMPT
             = "Enter a mathematical expression in infix notation.";
