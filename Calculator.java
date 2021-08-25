@@ -11,12 +11,12 @@
  *
  * Assumptions:
  *  1. Numbers are within the range of a double
- *  2. Cannot start with an operator (e.g. --1 + 2 or + 4 * 8)
+ *  2. Cannot start or end with an operator (e.g. --1 + 2 or 48 / )
  *  3. Multiplication must be written explicitly using "*"
  *          e.g. -(2 + 4) / 2 is invalid
  *               -1 * (2 + 4) / 2 is valid
  *  4. Parentheses must be filled
- *          e.g. ( ) and ( ) 1 + 2 are invalid
+ *          e.g. ( ) and (( ) 1 + 2) are invalid
  *
  */
 
@@ -158,12 +158,13 @@ public class Calculator {
           }
           else if (isDigit(current)) {
               String num = "";
+              // check for numbers that are longer than one digit
               while (index < charArray.length && (isDigit(charArray[index])
                       || charArray[index] == DECIMAL )) {
                   num += charArray[index];
                   index++;
               }
-              index--; // reached operator
+              index--; // reached operator, back track
               list.add(num);
           }
           else { // invalid
@@ -183,7 +184,7 @@ public class Calculator {
  /**
   * Method name: postfix
   * Description: changes infix expression to postfix expression based
-  * on precedence
+  * on precedence, removes parentheses
   *   Examples: 24 + 2 => 24 2 +
   *             2 + 4 * 3 => 2 4 3 * +
   *             (2 + 4) * 3 => 2 4 + 3 *
