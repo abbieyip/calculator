@@ -11,15 +11,17 @@
  *
  * Assumptions:
  *  1. Numbers are within the range of a double
- *  2. Cannot start or end with an operator (e.g. --1 + 2 or 48 / )
+ *  2. Cannot start or end with an operator
+ *          e.g. +1 + 2 and 48 / are invalid
+ *               - 1 + 2 is valid
  *  3. Multiplication must be written explicitly using "*"
  *          e.g. -(2 + 4) / 2 is invalid
  *               -1 * (2 + 4) / 2 is valid
  *  4. Parentheses must be filled
  *          e.g. ( ) and (( ) 1 + 2) are invalid
- *
  */
 
+import java.time.Period;
 import java.util.Scanner;
 import java.util.Stack;
 import java.util.LinkedList;
@@ -34,14 +36,14 @@ public class Calculator {
             = "Enter a mathematical expression in infix notation.";
     private static final String NO_INPUT = "No input was given.";
 
- /**
-  * Method name: evaluate
-  * Description: completes the arithmetic of two numbers using the given
-  * operator
-  * @param num1, num2, and an operator
-  * @throws DivisionByZeroException when trying to divide by zero
-  * @return result of arguments based on given operator
-  */
+  /**
+   * Method name: evaluate
+   * Description: completes the arithmetic of two numbers using the given
+   * operator
+   * @param num1, num2, and an operator
+   * @throws DivisionByZeroException when trying to divide by zero
+   * @return result of arguments based on given operator
+   */
  public static double evaluate(double num1, double num2, String operator)
             throws DivisionByZeroException {
      switch (operator) {
@@ -58,13 +60,13 @@ public class Calculator {
         return 0;
   }
 
- /**
-  * Method name: precedence
-  * Description: obtains precedence of operator based on PEDMAS; also
-  * determines if character is an operator if precedence is > 0
-  * @param operator, any character
-  * @return 1 if + or -, 2 if * or /, -1 if invalid
-  */
+  /**
+   * Method name: precedence
+   * Description: obtains precedence of operator based on PEDMAS; also
+   * determines if character is an operator if precedence is > 0
+   * @param operator, any character
+   * @return 1 if + or -, 2 if * or /, -1 if invalid
+   */
   public static int precedence(char operator) {
       if (operator == '+' || operator == '-') {
           return 1;
@@ -78,34 +80,34 @@ public class Calculator {
       }
       else return -1;
   }
-
   /**
-   * Method name: isDigit
-   * Description: Helper method to check if character is a digit
-   * @param character, any single character
-   * @return true if character is a digit, otherwise false
+   * Method name: checkNumber
+   * Description: Checks whether digit is a negative number or if it is longer
+   * than one digit
+   * @param charArray, to check number in charArray starting at given index
+   * @return full digit in string
    */
-   public static boolean isDigit(char character) {
-       for (char num : NUMBERS) {
-           if (character == num) {
-               return true;
-           }
-       }
-       return false;
-   }
-
- /**
-  * Method name: simpleFormat
-  * Description: Helper method to convert double negatives into addition,
-  * to remove white spaces, and to check for invalid characters
-  * @throws InvalidCharacterException when argument has a non-digit or non-op
-  * value
-  * @throws SyntaxErrorException when argument has double operators, double
-  * decimals, begins/ends with an operator, or is not in infix notation
-  * @param input, expression in infix notation
-  * @return valid expression without any double negatives or spaces in infix
-  * notation
-  */
+  public static String checkNumber(char[] charArray, int index) {
+      String num = "";
+      while (index < charArray.length && (Character.isDigit(charArray[index])
+              || charArray[index] == DECIMAL)) {
+          num += charArray[index];
+          index++;
+      }
+      return num;
+  }
+  /**
+   * Method name: simpleFormat
+   * Description: Helper method to convert double negatives into addition,
+   * to remove white spaces, and to check for invalid characters
+   * @throws InvalidCharacterException when argument has a non-digit or non-op
+   * value
+   * @throws SyntaxErrorException when argument has double operators, double
+   * decimals, begins/ends with an operator, or is not in infix notation
+   * @param input, expression in infix notation
+   * @return valid expression without any double negatives or spaces in infix
+   * notation
+   */
   public static LinkedList<String> simpleFormat(String input)
           throws InvalidCharacterException, SyntaxErrorException {
       // removes all spaces
@@ -117,12 +119,11 @@ public class Calculator {
       // iterates through each character
       while (index < charArray.length) {
           char current = charArray[index];
-
           // checks for doubles
           if (index < charArray.length - 1) {
               char next = charArray[index + 1];
               // removes double negatives
-              if (current == '-' && charArray[index + 1] == '-') {
+              if (current == '-' && next == '-') {
                   list.add("+");
                   index += 2;
                   continue;
@@ -133,17 +134,29 @@ public class Calculator {
                   throw new SyntaxErrorException();
               }
               // valid negative number after operator
-              else if (index > 0 && current == '-'
-                      && precedence(charArray[index - 1]) > 0
-                      && isDigit(next)) {
-                  list.add("-" + charArray[next]);
-                  index += 2;
+              else if (index > 0  && current == '-'
+                      && ((charArray[index - 1] == OPEN_PARENTHESIS
+                      || precedence(charArray[index - 1]) > 0))) {
+                  String number = checkNumber(charArray, index + 1);
+                  index += number.length() + 1;
+                  list.add("-" + number);
+                  continue;
+              }
+              // subtraction after end parenthesis
+              else if (index > 0  && current == '-'
+                      && charArray[index - 1] == CLOSED_PARENTHESIS) {
+                  String number = checkNumber(charArray, index + 1);
+                  index += number.length() + 1;
+                  list.add("-");
+                  list.add(number);
                   continue;
               }
               // beginning negative number
-              else if (index == 0 && current == '-' && isDigit(next)) {
-                  list.add("-" + next);
-                  index += 2;
+              else if (index == 0 && current == '-'
+                      && checkNumber(charArray, index + 1).length() > 0) {
+                  String num = checkNumber(charArray, index + 1);
+                  list.add("-" + num);
+                  index += num.length() + 1;
                   continue;
               }
               // invalid double decimal
@@ -152,20 +165,14 @@ public class Calculator {
               }
           }
           // valid operator
-          if (precedence(current) > 0 || current == OPEN_PARENTHESIS
-                  || current == CLOSED_PARENTHESIS || current == DECIMAL) {
+          if (precedence(current) >= 0 || current == DECIMAL) {
               list.add("" + current);
           }
-          else if (isDigit(current)) {
-              String num = "";
-              // check for numbers that are longer than one digit
-              while (index < charArray.length && (isDigit(charArray[index])
-                      || charArray[index] == DECIMAL )) {
-                  num += charArray[index];
-                  index++;
-              }
-              index--; // reached operator, back track
+          // reached number
+          else if (Character.isDigit(current)) {
+              String num = checkNumber(charArray, index);
               list.add(num);
+              index += num.length() - 1;
           }
           else { // invalid
               String invalidChar = Character.toString(current);
@@ -173,7 +180,7 @@ public class Calculator {
           }
         index++;
       }
-        // checks if expression begins or ends with an invalid operator
+      // checks if expression begins or ends with an invalid operator
       if ((charArray[0] != '-' && precedence(charArray[0]) > 0)
               || precedence(charArray[charArray.length - 1]) > 0) {
           throw new SyntaxErrorException();
@@ -181,18 +188,18 @@ public class Calculator {
       return list;
   }
 
- /**
-  * Method name: postfix
-  * Description: changes infix expression to postfix expression based
-  * on precedence, removes parentheses
-  *   Examples: 24 + 2 => 24 2 +
-  *             2 + 4 * 3 => 2 4 3 * +
-  *             (2 + 4) * 3 => 2 4 + 3 *
-  * @param input, expression in linked list format
-  * @return String expression in postfix format, numbers are separated by
-  * @throws SyntaxErrorException when input is not formatted correctly
-  * an empty space
-  */
+  /**
+   * Method name: postfix
+   * Description: changes infix expression to postfix expression based
+   * on precedence, removes parentheses
+   *   Examples: 24 + 2 => 24 2 +
+   *             2 + 4 * 3 => 2 4 3 * +
+   *             (2 + 4) * 3 => 2 4 + 3 *
+   * @param input, expression in linked list format
+   * @return String expression in postfix format, numbers are separated by
+   * @throws SyntaxErrorException when input is not formatted correctly
+   * an empty space
+   */
   public static String postfix(LinkedList<String> input)
           throws SyntaxErrorException {
       String output = "";
@@ -213,7 +220,7 @@ public class Calculator {
             stack.push(firstChar);
         }
         // reached a number
-        else if (current.length() > 1 || isDigit(firstChar)) {
+        else if (current.length() > 1 || Character.isDigit(firstChar)) {
             output += current + " ";
         }
         else if (firstChar == OPEN_PARENTHESIS) {
@@ -243,12 +250,12 @@ public class Calculator {
     return output;
   }
 
- /**
-  * Method name: parseString
-  * Description: evaluates postfix expression
-  * @param expression in postfix format
-  * @return evaluated mathematical expression
-  */
+  /**
+   * Method name: parseString
+   * Description: evaluates postfix expression
+   * @param expression in postfix format
+   * @return evaluated mathematical expression
+   */
   public static double parseString(String expression)
           throws SyntaxErrorException {
       // separate numbers and operators
@@ -293,13 +300,13 @@ public class Calculator {
       }
   }
 
- /**
-  * Method name: main
-  * Description: checks for number of arguments and prints out evaluated
-  * expression if arg is valid; otherwise prints out argument is invalid
-  * @param args, string expression
-  *
-  */
+  /**
+   * Method name: main
+   * Description: checks for number of arguments and prints out evaluated
+   * expression if arg is valid; otherwise prints out argument is invalid
+   * @param args, string expression
+   *
+   */
   public static void main(String[] args)  {
       String arg = "";
       // no in-line command given, ask for an expression

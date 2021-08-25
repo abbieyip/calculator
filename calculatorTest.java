@@ -3,10 +3,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import java.util.LinkedList;
 import java.util.Arrays;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class calculatorTest {
 
@@ -130,32 +127,6 @@ public class calculatorTest {
     assertEquals(-1, Calculator.precedence('>'));
     assertEquals(-1, Calculator.precedence('='));
 
-  }
-
-  /**
-   * Method name: testIsDigit
-   * Description: returns true if character is a digit or if
-   * it is a period, otherwise returns false
-   */
-  @Test
-  public void testIsDigit() {
-    assertTrue(Calculator.isDigit('1'));
-    assertTrue(Calculator.isDigit('2'));
-    assertTrue(Calculator.isDigit('3'));
-    assertTrue(Calculator.isDigit('4'));
-    assertTrue(Calculator.isDigit('5'));
-    assertTrue(Calculator.isDigit('6'));
-    assertTrue(Calculator.isDigit('7'));
-    assertTrue(Calculator.isDigit('8'));
-    assertTrue(Calculator.isDigit('9'));
-    assertTrue(Calculator.isDigit('0'));
-
-    assertFalse(Calculator.isDigit('+'));
-    assertFalse(Calculator.isDigit('-'));
-    assertFalse(Calculator.isDigit('*'));
-    assertFalse(Calculator.isDigit('/'));
-    assertFalse(Calculator.isDigit('%'));
-    assertFalse(Calculator.isDigit('@'));
   }
 
   /**
