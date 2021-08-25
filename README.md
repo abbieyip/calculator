@@ -21,6 +21,7 @@ javac Calculator.java
 
 ## Assumptions
 - All numbers in the expression are within the range of a double.
+- Evaluated expression is within the range of a double.
 
 ## Error cases
 - Expressions cannot start with a nonnegative operator.
@@ -51,3 +52,4 @@ java Calculator hello
 java Calculator (()) <br>
 
 > Syntax Error.
+
