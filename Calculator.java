@@ -201,7 +201,6 @@ public class Calculator {
           throws SyntaxErrorException {
       String output = "";
       Stack<Character> stack = new Stack<>();
-
     // iterates through character array
     for (int i = 0; i < input.size(); i++) {
         // checks for PEDMAS
@@ -258,7 +257,6 @@ public class Calculator {
       // separate numbers and operators
       String split[] = expression.split(" ");
       Stack<Double> stack = new Stack<>();
-
       // iterates through each operator and number
       for (int i = 0; i < split.length; i++) {
           // reached an operator
